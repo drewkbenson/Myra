@@ -36,6 +36,7 @@ namespace Myra
 
         private void add_destination_button_Click(object sender, EventArgs e)
         {
+            // Adding potentially multiple selected folders to the selected folders list
             var selectedFolders = GUIUtil.SelectFolderMultiple();
             var alreadyInList = false;
 
@@ -92,34 +93,110 @@ namespace Myra
             }
 
             List<string> destinations = new List<string>();
-            foreach (var dest in destination_display.Items) { destinations.Add(dest.ToString()); }
-
-            Action<int, int, TimeSpan> updateProgress = (nFilesDone, nFiles, timeElapsed) =>
+            foreach (var dest in destination_display.Items.OfType<string>())
             {
-                stat_slash_bar.Invoke((MethodInvoker)
-                delegate {
-                    stat_slash_bar.Text = $"{nFilesDone} / {nFiles}";
-                });
+                destinations.Add(dest);
+            }
 
-                time_elapsed_label.Invoke((MethodInvoker)
-                delegate {
-                    time_elapsed_label.Text = $"Time Elapsed: {timeElapsed.ToString(@"hh\:mm\:ss")}";
-                });
+            /*
+             * This Action is what the engine will call when it wants the UI to update.
+             * 
+             * MyraProgress - progressState:
+             *      This defines what state the program is in. See MayaProgress in MayaEngine.cs for more information on this Enum
+             * nFilesDone - int:
+             *      This represents the number of files that have been COMPLETED
+             *      This becomes nDirectories when in the ANALYZING_DIRECTORIES progress state
+             * nFiles - int:
+             *      This represents the number of files that need to be completed
+             * timeElapsed - timeSpan
+             *      Represents the amount of time that has elapsed since pressing the "Copy Files" button
+             */
+            Action<MyraProgress, int, int, TimeSpan> updateProgress = (progressState, nFilesDone, nFiles, timeElapsed) =>
+            {
+                if (progressState == MyraProgress.NOT_STARTED)
+                {
 
-                copy_progress_bar.Invoke((MethodInvoker)
-                delegate {
-                    if (copy_progress_bar.Maximum != nFiles)
-                    {
-                        copy_progress_bar.Maximum = nFiles;
-                    }
-                    copy_progress_bar.Value = nFilesDone;
-                });
-
-                if (nFilesDone == nFiles)
+                } else if (progressState == MyraProgress.ANALYZING_DIRECTORIES)
                 {
                     stat_slash_bar.Invoke((MethodInvoker)
+                    delegate
+                    {
+                        stat_slash_bar.Text = $"Analyzing: {nFilesDone} Directories / {nFiles} Files";
+                    });
+
+                    time_elapsed_label.Invoke((MethodInvoker)
                     delegate {
-                        stat_slash_bar.Text = $"{nFiles} Copied!";
+                        time_elapsed_label.Text = $"Time Elapsed: {timeElapsed.ToString(@"hh\:mm\:ss")}";
+                    });
+
+                    copy_progress_bar.Invoke((MethodInvoker)
+                    delegate {
+                        if (copy_progress_bar.Style == ProgressBarStyle.Blocks)
+                        {
+                            copy_progress_bar.Style = ProgressBarStyle.Marquee;
+                        }
+                    });
+                } else if (progressState == MyraProgress.COPYING_FILES)
+                {
+                    stat_slash_bar.Invoke((MethodInvoker)
+                    delegate
+                    {
+                        stat_slash_bar.Text = $"{nFilesDone} / {nFiles}";
+                    });
+
+                    eta_label.Invoke((MethodInvoker)
+                    delegate {
+                        if (nFilesDone > 0)
+                        {
+                            var scaleFactor = ((float) nFiles / (float) nFilesDone) - 1;
+                            eta_label.Text = $"Remaining Time: {TimeSpan.FromTicks((long) (timeElapsed.Ticks * scaleFactor)).ToString(@"hh\:mm\:ss")}";
+                        } else
+                        {
+                            eta_label.Text = $"Calculating time remaining...";
+                        }
+                    });
+
+                    time_elapsed_label.Invoke((MethodInvoker)
+                    delegate {
+                        time_elapsed_label.Text = $"Time Elapsed: {timeElapsed.ToString(@"hh\:mm\:ss")}";
+                    });
+
+                    copy_progress_bar.Invoke((MethodInvoker)
+                    delegate {
+                        if (copy_progress_bar.Style == ProgressBarStyle.Marquee)
+                        {
+                            copy_progress_bar.Style = ProgressBarStyle.Blocks;
+                        }
+                    });
+
+                    copy_progress_bar.Invoke((MethodInvoker)
+                    delegate {
+                        if (copy_progress_bar.Maximum < nFilesDone)
+                        {
+
+                        }
+                        if (copy_progress_bar.Maximum != nFiles)
+                        {
+                            copy_progress_bar.Maximum = nFiles;
+                        }
+                        copy_progress_bar.Value = nFilesDone;
+                    });
+                } else if (progressState == MyraProgress.DONE)
+                {
+                    stat_slash_bar.Invoke((MethodInvoker)
+                    delegate
+                    {
+                        stat_slash_bar.Text = $"{nFiles} files copied!";
+                    });
+
+                    copy_progress_bar.Invoke((MethodInvoker)
+                    delegate {
+                        if (copy_progress_bar.Style == ProgressBarStyle.Marquee)
+                        {
+                            copy_progress_bar.Style = ProgressBarStyle.Blocks;
+                            copy_progress_bar.Maximum = 1;
+                            copy_progress_bar.Value = 1;
+                        }
                     });
                 }
             };
@@ -142,7 +219,7 @@ namespace Myra
                 move_mode_checkbox.Checked
             );
 
-            MyraEngine.StartMyraEngine(
+            MyraEngine.StartMyraEngineThread(
                 options,
                 updateProgress,
                 threadFinish

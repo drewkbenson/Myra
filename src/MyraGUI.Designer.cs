@@ -55,6 +55,7 @@
             time_elapsed_label = new Label();
             myraEngineBindingSource = new BindingSource(components);
             myraEngineOptionsBindingSource = new BindingSource(components);
+            eta_label = new Label();
             input_panel.SuspendLayout();
             output_panel.SuspendLayout();
             panel1.SuspendLayout();
@@ -245,10 +246,10 @@
             // 
             // copy_progress_bar
             // 
-            copy_progress_bar.Location = new Point(186, 4);
+            copy_progress_bar.Location = new Point(189, 33);
             copy_progress_bar.Margin = new Padding(3, 4, 3, 4);
             copy_progress_bar.Name = "copy_progress_bar";
-            copy_progress_bar.Size = new Size(500, 49);
+            copy_progress_bar.Size = new Size(500, 20);
             copy_progress_bar.Step = 1;
             copy_progress_bar.TabIndex = 9;
             // 
@@ -264,6 +265,7 @@
             // 
             // copy_stats_panel
             // 
+            copy_stats_panel.Controls.Add(eta_label);
             copy_stats_panel.Controls.Add(time_elapsed_label);
             copy_stats_panel.Controls.Add(copy_progress_bar);
             copy_stats_panel.Controls.Add(stat_slash_bar);
@@ -290,11 +292,20 @@
             // 
             myraEngineOptionsBindingSource.DataSource = typeof(MyraEngineOptions);
             // 
+            // eta_label
+            // 
+            eta_label.AutoSize = true;
+            eta_label.Location = new Point(357, 4);
+            eta_label.Name = "eta_label";
+            eta_label.Size = new Size(36, 20);
+            eta_label.TabIndex = 11;
+            eta_label.Text = "_init";
+            // 
             // MyraGUI
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(720, 545);
+            ClientSize = new Size(720, 549);
             Controls.Add(panel1);
             Controls.Add(output_panel);
             Controls.Add(input_panel);
@@ -342,6 +353,7 @@
         private Label move_mode_label;
         private Panel copy_stats_panel;
         private Label time_elapsed_label;
+        private Label eta_label;
     }
 }
 
