@@ -129,6 +129,11 @@ namespace Myra
                         time_elapsed_label.Text = $"Time Elapsed: {timeElapsed.ToString(@"hh\:mm\:ss")}";
                     });
 
+                    eta_label.Invoke((MethodInvoker)
+                    delegate {
+                        eta_label.Text = $"";
+                    });
+
                     copy_progress_bar.Invoke((MethodInvoker)
                     delegate {
                         if (copy_progress_bar.Style == ProgressBarStyle.Blocks)

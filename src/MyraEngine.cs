@@ -199,7 +199,7 @@ namespace Myra
             var nFiles = 0;
             var lastUpdate = DateTime.UtcNow;
 
-            foreach (var entry in Directory.EnumerateFileSystemEntries(options.source, "*", enumerationRecurseOptions))
+            foreach (var entry in Directory.EnumerateDirectories(options.source, "*", enumerationRecurseOptions))
             {
                 if (lastUpdate.AddMilliseconds(100) < DateTime.UtcNow)
                 {
@@ -217,6 +217,8 @@ namespace Myra
 
                         string relativePath = Path.GetRelativePath(options.source, entry);
 
+                        nFiles += Directory.EnumerateFiles(entry, "*", enumerationNoRecurseOptions).Count();
+
                         foreach (var dest in options.destinations)
                         {
                             Directory.CreateDirectory(Path.Combine(dest, relativePath));
@@ -227,7 +229,7 @@ namespace Myra
                         nFiles++;
                     }
                 }
-                catch (Exception e)
+                catch
                 {
                     // Skip bad entry
                 }
